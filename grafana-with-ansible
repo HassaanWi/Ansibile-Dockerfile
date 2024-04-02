@@ -43,18 +43,18 @@
         name: docker
         state: present
 
-    - name: Copy Dockerfile
+    - name: Copy file from local to remote
       ansible.builtin.copy:
-        src: /home/ubuntu/grafana          #local dir
-        dest: /tmp/grafana                 #remote dir
-      delegate_to: localhost
+        src: /home/ubuntu/grafana             #local dir
+        dest: /home/ubuntu/                   #remote dir
+
 
     - name: Build Docker image
       docker_image:
         name: my_grafana_image
         tag: latest
         build:
-          path: /tmp/grafana             #remote dir
+          path: /home/ubuntu/grafana             #remote dir
       register: docker_image_result
 
     - name: Run Docker container
