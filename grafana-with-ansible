@@ -1,0 +1,66 @@
+---
+- name: Install Docker and run Grafana container
+  hosts: all
+  become: yes
+  become_user: root
+  tasks:
+    - name: Install Docker dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Install pip for Python 3
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install Docker SDK for Python
+      pip:
+        name: docker
+        state: present
+
+    - name: Copy Dockerfile
+      ansible.builtin.copy:
+        src: /home/ubuntu/grafana          #local dir
+        dest: /tmp/grafana                 #remote dir
+      delegate_to: localhost
+
+    - name: Build Docker image
+      docker_image:
+        name: my_grafana_image
+        tag: latest
+        build:
+          path: /tmp/grafana             #remote dir
+      register: docker_image_result
+
+    - name: Run Docker container
+      docker_container:
+        name: my_grafana_container
+        image: my_grafana_image:latest
+        state: started
+        ports:
+          - "3000:3000"
